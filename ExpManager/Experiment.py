@@ -2,49 +2,51 @@ import os
 
 from utils import *
 from utils.funny_test import run_haha_job
-
+from ExpManager.Trial import Trial
 
 
 
 class Experiment:
-    def __init__(self, name, description, processor):
+    def __init__(self, name, description, optimizer):
         self.name = name
         self.description = description
-        self.processor = processor
+        self.optimizer = optimizer
+        self.base_dir = os.path.join(optimizer.base_dir, "Experiments", f"Exp_{self.name}")
 
 
+        self.trials = []
 
-        self.create_folder_structure()
-
-
-
-
-
-
-    def run(self):
-        # Placeholder for running the experiment
-        print(f"Running experiment: {self.name}")
-        print(f"Description: {self.description}")
-        print(f"Process: {self.processor}")
-        run_haha_job()
 
 
     def create_folder_structure(self):
         folders = [
-            os.path.join(workdir_path, f"Exp_{self.name}", "description"),
-            os.path.join(workdir_path, f"Exp_{self.name}", "trials"),
-            os.path.join(workdir_path, f"Exp_{self.name}", "summary"),
-            os.path.join(workdir_path, f"Exp_{self.name}", "ana_scripts"),
+            os.path.join(self.base_dir, "description"),
+            os.path.join(self.base_dir, "trials"),
+            os.path.join(self.base_dir, "summary"),
+            os.path.join(self.base_dir, "ana_scripts"),
         ]
         for folder in folders:
             os.makedirs(folder, exist_ok=True)
             print(f"Created folder: {folder}")
 
+    def run_all_trials(self):
+        print(f"Running all trials for experiment: {self.name}")
+
+    def add_trial(self, config, index):
+        trial = Trial(
+            name=f"Trial_{index}",
+            config=config,
+            experiment=self,
+        )
+
+        self.trials.append(trial)
+        trial.create_folder_structure()
+        trial.dump_config()
 
 
-    def add_trial(self, trial):
-        # Placeholder for adding a trial to the experiment
-        print(f"Adding trial: {trial}")
+    def get_n_trials(self):
+        return len(self.trials)
+
 
 
 
@@ -53,6 +55,5 @@ if __name__ == "__main__":
     exp = Experiment(
         name="Test Experiment",
         description="This is a test experiment.",
-        processor="Sample process"
     )
     # exp.run()
