@@ -1,17 +1,26 @@
 from utils import *
 from ExpManager.Trial import Trial
 from ExpManager.Experiment import Experiment
-
+from TaskPool.TaskPool import TaskPool
+from EAgent.ParamCheckerAgent import ParamCheckerAgent
+from EAgent.LearningAgent import LearningAgent
 
 class Optimizer:
     def __init__(self, name, script_path, default_config, metrics_to_optimize, algorithm_path=None):
+        self.all_pass = None
         self.name = name
 
 
         self.script_path = script_path
         self.default_config = default_config
         self.metrics_to_optimize = metrics_to_optimize
+
+
         self.processor = 1
+        self.task_pool = TaskPool(max_workers=self.processor)
+
+
+
 
         self.base_dir = os.path.join(workdir_path, self.name)
         self.algorithm_path = algorithm_path
@@ -43,8 +52,14 @@ class Optimizer:
         return name, description, configs
 
     def start_optimize(self):
+
+        self.task_pool.start_pool()
+
+
         init_exp = self.init_default_experiment()
         init_exp.run_all_trials()
+
+        self.learning_algorithm()
 
 
 
@@ -55,8 +70,8 @@ class Optimizer:
 
     def init_default_experiment(self):
         name = "DefaultExperiment"
-        description = "This is the default experiment."
-        configs = [self.default_config]
+        description = "Experiment to test the default configuration."
+        configs = [self.default_config for i in range(1)]
         init_exp = self.create_experiment(name, description, configs)
         return init_exp
 
@@ -73,10 +88,38 @@ class Optimizer:
 
         return experiment
 
+    def check_parameter(self):
+        if not self.algorithm_path:
+            print("No learning algorithm path provided.")
+            return
+
+        param_checker = ParamCheckerAgent(
+            workdir=os.path.join(self.base_dir, "Summary"),
+            script_path=self.script_path,
+            default_config=self.default_config,
+            metrics_to_optimize=self.metrics_to_optimize,
+            algorithm_path=self.algorithm_path
+        )
+        param_checker.check()
+        self.all_pass = param_checker.all_pass()
+
+
+
     def learning_algorithm(self):
         if not self.algorithm_path:
             print("No learning algorithm path provided.")
             return
+
+        algo_learner = LearningAgent(
+            workdir=os.path.join(self.base_dir, "Summary"),
+            script_path=self.script_path,
+            default_config=self.default_config,
+            metrics_to_optimize=self.metrics_to_optimize,
+            algorithm_path=self.algorithm_path
+        )
+        algo_learner.learn()
+
+
 
 
 
@@ -94,10 +137,18 @@ if __name__ == "__main__":
         name="TestOptimizer",
         script_path="/home/easonfu/pyproj/UniverseOptimizer/testscripts/run",
         default_config=default_config,
-        metrics_to_optimize=["Eff", "Ghost"]
+        metrics_to_optimize=["Eff", "Ghost"],
+        algorithm_path="/home/easonfu/Software/260613_Moore/stack"
     )
 
+    # optimizer.check_parameter()
+    # if optimizer.all_pass:
+    print("All parameters passed the check. Starting optimization...")
     optimizer.start_optimize()
+
+
+
+    # optimizer.start_optimize()
 
 
 

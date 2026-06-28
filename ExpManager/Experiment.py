@@ -31,9 +31,10 @@ class Experiment:
             print(f"Created folder: {folder}")
 
     def run_all_trials(self):
-        print(f"Running all trials for experiment: {self.name}")
-        time.sleep(5)
-        return True
+        for index, trial in enumerate(self.trials):
+            print(f"Running {trial.name} with config: {trial.config}")
+            trial.submit_job(script=self.optimizer.script_path, task_type="shell")
+
 
     def add_trial(self, config, index):
         trial = Trial(

@@ -46,6 +46,7 @@ class JobRunner:
             self.proc = subprocess.Popen(
                 f"source {self.script} && touch FLAG_DONE",
                 cwd=self.workdir,
+                shell=True,
             )
             self.running = True
             self.processed = False
