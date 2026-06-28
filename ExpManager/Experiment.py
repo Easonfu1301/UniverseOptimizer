@@ -5,6 +5,7 @@ from utils import *
 from utils.funny_test import run_haha_job
 from ExpManager.Trial import Trial
 import threading
+from EAgent.SummaryAgent import SummaryAgent
 
 
 
@@ -18,6 +19,11 @@ class Experiment:
 
         self.all_complete = False
         self.trials = []
+
+        self.create_folder_structure()
+        self.dump_description()
+
+
 
     def monitor_thread(self):
         while not self.all_complete:
@@ -59,14 +65,22 @@ class Experiment:
         )
 
         self.trials.append(trial)
-        trial.create_folder_structure()
-        trial.dump_config()
 
+    def summary(self):
+        workdir = os.path.join(self.base_dir, "summary")
+
+        summary_agent = SummaryAgent(
+            workdir, self.description
+        )
+        summary_agent.generate_summary()
 
     def get_n_trials(self):
         return len(self.trials)
 
-
+    def dump_description(self):
+        description_path = os.path.join(self.base_dir, "description", "description.txt")
+        with open(description_path, "w") as f:
+            f.write(self.description)
 
 
 

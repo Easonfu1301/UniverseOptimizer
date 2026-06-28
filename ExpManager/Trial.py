@@ -17,6 +17,9 @@ class Trial:
 
         self.base_dir = os.path.join(experiment.base_dir, "trials", self.name)
 
+        self.create_folder_structure()
+        self.dump_config()
+
     @property
     def processed(self):
         """Check if the trial is complete by looking for FLAG_DONE file."""
@@ -43,12 +46,7 @@ class Trial:
             json.dump(self.config, f, indent=4)
         print(f"Dumped config to: {config_path}")
 
-    def dump_description(self):
-        description_path = os.path.join(self.base_dir, "description.txt")
-        with open(description_path, "w") as f:
-            f.write(f"Trial Name: {self.name}\n")
-            f.write(f"Trial Config: {self.config}\n")
-        print(f"Dumped description to: {description_path}")
+
 
 
 

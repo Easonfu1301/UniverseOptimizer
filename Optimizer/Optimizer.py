@@ -4,6 +4,7 @@ from ExpManager.Experiment import Experiment
 from TaskPool.TaskPool import TaskPool
 from EAgent.ParamCheckerAgent import ParamCheckerAgent
 from EAgent.LearningAgent import LearningAgent
+from EAgent.ExpDesignAgent import ExpDesignAgent
 import time
 
 
@@ -12,17 +13,23 @@ import time
 
 
 class Optimizer:
-    def __init__(self, name, script_path, default_config, metrics_to_optimize, algorithm_path=None):
+    def __init__(self, name, script_path, config_path, metrics_to_optimize, algorithm_path=None):
         self.all_pass = None
         self.name = name
 
 
         self.script_path = script_path
-        self.default_config = default_config
+
+
+        self.default_config_path = config_path
+        with open(self.default_config_path, "r") as f:
+            self.default_config = json.load(f)
+
+
         self.metrics_to_optimize = metrics_to_optimize
 
 
-        self.processor = 1
+        self.processor = 10
         self.task_pool = TaskPool(max_workers=self.processor)
 
 
@@ -48,37 +55,49 @@ class Optimizer:
             print(f"Created folder: {path}")
 
     def acquire_experiment(self):
-        name = "TestExperiment"
-        description = "This is a test experiment."
-        configs = [
-            {"param1": 0.1, "param2": 0.5},
-            {"param1": 0.2, "param2": 0.6},
-            {"param1": 0.3, "param2": 0.7},
-        ]
+        agent = ExpDesignAgent(
+            optim_path=self.base_dir,
+            metrics_to_optimize=self.metrics_to_optimize,
+            base_config_path=self.default_config_path
+        )
+        agent.acquire_experiment()
+
+        name, description, configs = agent.readout_experiment_design()
+        print(f"Experiment Name: {name}")
+        # print(f"Experiment Description: {description}")
+        print(f"Number of Configs: {len(configs)}")
+
+        agent.del_tmp_workdir()
 
         return name, description, configs
 
     def start_optimize(self):
 
         self.task_pool.start_pool()
-
-
-        init_exp = self.init_default_experiment()
-        init_exp.run_all_trials()
-
-
-
-        self.wait_FALG = True
-        self.wait_or_continue()
-
-
-
-        self.learning_algorithm()
-
+        #
+        #
+        # init_exp = self.init_default_experiment()
+        # init_exp.run_all_trials()
+        #
+        #
+        #
+        # self.learning_algorithm()
+        #
+        #
+        # self.wait_FALG = True
+        # self.wait_or_continue()
 
 
         while True:
-            pass
+
+            name, description, configs = self.acquire_experiment()
+            new_exp = self.create_experiment(name, description, configs)
+            new_exp.run_all_trials()
+
+            # self.learning_algorithm()
+
+            self.wait_FALG = True
+            self.wait_or_continue()
 
 
 
@@ -91,19 +110,16 @@ class Optimizer:
 
 
     def wait_or_continue(self):
-        while self.wait_FALG and not all([exp.all_complete for exp in self.Experiments]):
-            print(self.wait_FALG, [exp.all_complete for exp in self.Experiments])
+        while self.wait_FALG and not self.complete_all_experiments():
+            # print(self.wait_FALG, [exp.all_complete for exp in self.Experiments])
             print("Waiting for all trials to complete...")
             time.sleep(1)
 
+        self.wait_FALG = False
+
 
     def complete_all_experiments(self):
-        # for experiment in self.Experiments:
-        #     if not all([trial.processed for trial in experiment.trials]):
-        #         print(f"Experiment {experiment.name} is not complete.")
-        #         return False
-        # return True
-        pass
+        return all([exp.all_complete for exp in self.Experiments])
 
 
     def init_default_experiment(self):
@@ -114,9 +130,19 @@ class Optimizer:
         return init_exp
 
 
+
+
+
+
+
+
+
+
+
+
+
     def create_experiment(self, name, description, configs):
         experiment = Experiment(name, description, self)
-        experiment.create_folder_structure()
 
         for config in configs:
             experiment.add_trial(config=config, index=experiment.get_n_trials())
@@ -125,6 +151,22 @@ class Optimizer:
 
 
         return experiment
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     def check_parameter(self):
         if not self.algorithm_path:
@@ -165,28 +207,27 @@ class Optimizer:
         pass
 
 
+
 if __name__ == "__main__":
 
     import json
-    with open("/home/easonfu/pyproj/UniverseOptimizer/testscripts/config.json", "r") as f:
-        default_config = json.load(f)
 
     optimizer = Optimizer(
         name="TestOptimizer",
         script_path="/home/easonfu/pyproj/UniverseOptimizer/testscripts/run",
-        default_config=default_config,
-        metrics_to_optimize=["Eff", "Ghost"],
+        config_path="/home/easonfu/pyproj/UniverseOptimizer/testscripts/config.json",
+        metrics_to_optimize=["eff", "effp5", "ghostrate"],
         algorithm_path="/home/easonfu/Software/260613_Moore/stack"
     )
 
     # optimizer.check_parameter()
     # if optimizer.all_pass:
-    print("All parameters passed the check. Starting optimization...")
+    #     print("All parameters passed the check. Starting optimization...")
+    #     optimizer.start_optimize()
+
+
+
     optimizer.start_optimize()
-
-
-
-    # optimizer.start_optimize()
 
 
 
