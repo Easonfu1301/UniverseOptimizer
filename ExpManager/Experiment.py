@@ -1,4 +1,5 @@
 import os
+import time
 
 from utils import *
 from utils.funny_test import run_haha_job
@@ -31,6 +32,8 @@ class Experiment:
 
     def run_all_trials(self):
         print(f"Running all trials for experiment: {self.name}")
+        time.sleep(5)
+        return True
 
     def add_trial(self, config, index):
         trial = Trial(

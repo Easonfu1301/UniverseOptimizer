@@ -1,5 +1,5 @@
 from utils import *
-
+from ExpManager.Trial import Trial
 from ExpManager.Experiment import Experiment
 
 
@@ -11,6 +11,7 @@ class Optimizer:
         self.script_path = script_path
         self.default_config = default_config
         self.metrics_to_optimize = metrics_to_optimize
+        self.processor = 1
 
         self.base_dir = os.path.join(workdir_path, self.name)
         self.algorithm_path = algorithm_path
@@ -41,7 +42,23 @@ class Optimizer:
 
         return name, description, configs
 
+    def start_optimize(self):
+        init_exp = self.init_default_experiment()
+        init_exp.run_all_trials()
 
+
+
+
+
+
+
+
+    def init_default_experiment(self):
+        name = "DefaultExperiment"
+        description = "This is the default experiment."
+        configs = [self.default_config]
+        init_exp = self.create_experiment(name, description, configs)
+        return init_exp
 
 
     def create_experiment(self, name, description, configs):
@@ -68,23 +85,20 @@ class Optimizer:
 
 
 if __name__ == "__main__":
+
+    import json
+    with open("/home/easonfu/pyproj/UniverseOptimizer/testscripts/config.json", "r") as f:
+        default_config = json.load(f)
+
     optimizer = Optimizer(
         name="TestOptimizer",
-        script_path="path/to/script.py",
-        default_config={"param1": 0.1, "param2": 0.5},
+        script_path="/home/easonfu/pyproj/UniverseOptimizer/testscripts/run",
+        default_config=default_config,
         metrics_to_optimize=["Eff", "Ghost"]
     )
 
+    optimizer.start_optimize()
 
-    name, description, test_configs = optimizer.acquire_experiment()
-
-    exp = optimizer.create_experiment(
-        name=name,
-        description=description,
-        configs=test_configs
-    )
-
-    exp.run_all_trials()
 
 
 
