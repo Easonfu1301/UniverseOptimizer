@@ -4,6 +4,12 @@ from ExpManager.Experiment import Experiment
 from TaskPool.TaskPool import TaskPool
 from EAgent.ParamCheckerAgent import ParamCheckerAgent
 from EAgent.LearningAgent import LearningAgent
+import time
+
+
+
+
+
 
 class Optimizer:
     def __init__(self, name, script_path, default_config, metrics_to_optimize, algorithm_path=None):
@@ -29,6 +35,7 @@ class Optimizer:
         self.create_folder_structure()
 
         self.Experiments = []  # List to hold experiments associated with this optimizer
+        self.wait_FALG = False
 
     def create_folder_structure(self):
         paths = [
@@ -59,13 +66,44 @@ class Optimizer:
         init_exp = self.init_default_experiment()
         init_exp.run_all_trials()
 
+
+
+        self.wait_FALG = True
+        self.wait_or_continue()
+
+
+
         self.learning_algorithm()
 
 
 
+        while True:
+            pass
 
 
 
+
+
+
+
+
+
+
+
+    def wait_or_continue(self):
+        while self.wait_FALG and not all([exp.all_complete for exp in self.Experiments]):
+            print(self.wait_FALG, [exp.all_complete for exp in self.Experiments])
+            print("Waiting for all trials to complete...")
+            time.sleep(1)
+
+
+    def complete_all_experiments(self):
+        # for experiment in self.Experiments:
+        #     if not all([trial.processed for trial in experiment.trials]):
+        #         print(f"Experiment {experiment.name} is not complete.")
+        #         return False
+        # return True
+        pass
 
 
     def init_default_experiment(self):

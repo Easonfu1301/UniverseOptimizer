@@ -46,9 +46,9 @@ class TaskPool:
 
 
 
-    def submit_task(self, script_path, workdir, task_type):
+    def submit_task(self, job_runner):
         with threading.Lock():
-            job_runner = JobRunner(script=script_path, workdir=workdir, task_type=task_type)
+            # job_runner = JobRunner(script=script_path, workdir=workdir, task_type=task_type)
             self.jobs.append(job_runner)
 
 

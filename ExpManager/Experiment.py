@@ -4,6 +4,7 @@ import time
 from utils import *
 from utils.funny_test import run_haha_job
 from ExpManager.Trial import Trial
+import threading
 
 
 
@@ -15,9 +16,17 @@ class Experiment:
         self.base_dir = os.path.join(optimizer.base_dir, "Experiments", f"Exp_{self.name}")
 
 
+        self.all_complete = False
         self.trials = []
 
-
+    def monitor_thread(self):
+        while not self.all_complete:
+            if all([trial.processed for trial in self.trials]):
+                print(f"All trials in experiment {self.name} are complete.")
+                self.all_complete = True
+            else:
+                print(f"Monitoring experiment {self.name}:, remaining trials: {len([trial for trial in self.trials if not trial.processed])}")
+                time.sleep(1)
 
     def create_folder_structure(self):
         folders = [
@@ -31,9 +40,15 @@ class Experiment:
             print(f"Created folder: {folder}")
 
     def run_all_trials(self):
+        self.all_complete = False
         for index, trial in enumerate(self.trials):
             print(f"Running {trial.name} with config: {trial.config}")
             trial.submit_job(script=self.optimizer.script_path, task_type="shell")
+
+
+        self.monitor = threading.Thread(target=self.monitor_thread)
+        self.monitor.start()
+
 
 
     def add_trial(self, config, index):

@@ -17,6 +17,11 @@ class Trial:
 
         self.base_dir = os.path.join(experiment.base_dir, "trials", self.name)
 
+    @property
+    def processed(self):
+        """Check if the trial is complete by looking for FLAG_DONE file."""
+        return self.job_runner.processed if hasattr(self, 'job_runner') else False
+
     def __str__(self):
         return f"Trial(name={self.name}, config={self.config})"
 
@@ -25,9 +30,11 @@ class Trial:
         print(f"Created folder: {self.base_dir}")
 
     def submit_job(self, script, task_type):
-        job_runner = JobRunner(script=script, workdir=self.base_dir, task_type=task_type)
-        self.optimizer.task_pool.submit_task(script_path=script, workdir=self.base_dir, task_type=task_type)
+        self.job_runner = JobRunner(script=script, workdir=self.base_dir, task_type=task_type)
+        self.optimizer.task_pool.submit_task(job_runner=self.job_runner)
         print(f"Submitted job for trial: {self.name}")
+
+
 
 
     def dump_config(self):
