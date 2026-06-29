@@ -21,7 +21,7 @@ class TaskPool:
 
 
 
-    def monitor_status_thread(self):
+    def monitor_status_thread(self, interval=5):
         while True:
             self.running_status = [job.running for job in self.jobs]
             self.processed_jobs = [job.processed for job in self.jobs]
@@ -40,7 +40,7 @@ class TaskPool:
                         job.check_status()
                         break
 
-            time.sleep(1)  # Sleep for a while before checking again
+            time.sleep(interval)  # Sleep for a while before checking again
 
 
 

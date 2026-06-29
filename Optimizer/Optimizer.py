@@ -25,7 +25,7 @@ class Optimizer:
         self.metrics_to_optimize = metrics_to_optimize
         self.metrics_direction = metrics_direction
 
-        self.processor = 1
+        self.processor = 2
         self.task_pool = TaskPool(max_workers=self.processor)
 
         self.base_dir = os.path.join(workdir_path, self.name)
