@@ -9,4 +9,4 @@ description = "Universe Optimizer Project"
 requires-python = ">=3.10"
 
 [tool.setuptools.packages.find]
-include = ["utils*", "BaseAgent*", "JobRunner*", "UniverseOptimizer*"]
+include = ["utils*", "BaseAgent*", "EAgent*", "ExpManager*", "JobRunner*", "Optimizer*", "TaskPool*"]
