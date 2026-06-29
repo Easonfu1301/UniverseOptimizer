@@ -7,6 +7,9 @@ import time
 import threading
 from utils.funny_test import run_haha_job
 
+import matplotlib
+matplotlib.use('Agg')
+
 from FUCKROOT import HEP_PLOT
 import matplotlib.pyplot as plt
 
@@ -165,14 +168,16 @@ class JobRunner:
         timestamps = [ts - timestamps[0] for ts in timestamps]
         memory_usage_mb = [mem / (1024 * 1024) for mem in memory_usage]  # Convert to MB
 
-        fig, ax = plt.subplots(figsize=(10, 6))
+        fig, ax = plt.subplots(figsize=(20, 16))
         ax.plot(timestamps, memory_usage_mb, marker='o')
         ax.set_title("Memory Usage Over Time")
         ax.set_xlabel("Timestamp")
         ax.set_ylabel("Memory Usage (MB)")
         ax.grid()
         plt.tight_layout()
-        plt.show()
+        plt.savefig(os.path.join(self.workdir, "memory_usage.png"))
+        plt.close(fig)
+        print(f"Memory usage plot saved to {os.path.join(self.workdir, 'memory_usage.png')}")
 
 
 

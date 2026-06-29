@@ -307,6 +307,368 @@ LongBackwardMP_ThresholdSweep
         self.response(prompt, workdir=tmp_workdir, addition_dirs=add_dirs)
 
 
+
+    def acquire_experiment_best(self):
+        all_exp_summary_path = os.listdir(os.path.join(self.optim_path, "Experiments"))
+        all_exp_summary_path = [os.path.join(self.optim_path, "Experiments", exp) for exp in all_exp_summary_path if
+                                os.path.isdir(os.path.join(self.optim_path, "Experiments", exp))]
+
+        all_exp_summary_path = [os.path.join(exp_path, "summary") for exp_path in all_exp_summary_path]
+
+        algo_summary_path = os.path.join(self.optim_path, "Summary")
+
+        tmp_workdir = os.path.join(self.optim_path, "exp_design_tmp")
+        tmp_workdir_trials = os.path.join(tmp_workdir, "trials")
+
+        os.makedirs(tmp_workdir, exist_ok=True)
+        os.makedirs(tmp_workdir_trials, exist_ok=True)
+
+        prompt = f"""
+这是一个实验优化任务。
+
+已有实验总结位于：
+
+{all_exp_summary_path}
+
+算法配置说明位于：
+
+{algo_summary_path}
+
+你的目标不是设计下一轮搜索，也不是继续验证假设。
+
+你的目标是：
+
+**基于已有实验形成的全部认知，生成一组最有希望达到当前最佳 Pareto Front 的配置。**
+
+可以认为：
+
+- 当前轮次已经积累了足够实验；
+- 你的任务不是获取更多信息，而是利用已有信息；
+- 每一个生成的配置，都应该尽可能具有较高成功概率，而不是用于探索未知区域。
+
+整个任务应遵循：
+
+> Best Configuration Synthesis，而不是 Experiment Design。
+
+--------------------------------------------------
+Step 1 阅读历史实验
+--------------------------------------------------
+
+逐个阅读所有 summary。
+
+对于每个实验，总结：
+
+- 实验目标
+- 调整了哪些参数
+- 哪些参数明显提升了目标
+- 哪些参数明显恶化了目标
+- 哪些参数没有明显影响
+- 哪些参数之间出现了稳定组合
+
+不要重新分析 trial。
+
+仅依据 summary。
+
+--------------------------------------------------
+Step 2 综合全部实验
+--------------------------------------------------
+
+结合所有实验，
+
+总结：
+
+哪些结论已经有充分证据支持。
+
+哪些参数：
+
+- 基本已经确定最佳区域
+- 存在稳定最优组合
+- 存在明显 trade-off
+- 对不同目标存在不同最佳值
+
+对于证据不足的部分，应明确指出。
+
+不要根据经验推测算法性质。
+
+只能依据已有实验。
+
+--------------------------------------------------
+Step 3 Pareto Front 分析
+--------------------------------------------------
+
+优化目标：
+
+{self.metrics_to_optimize}
+
+优化方向：
+
+{self.metrics_direction}
+
+分析：
+
+已有 Pareto Front 具有哪些特点？
+
+哪些配置已经接近 Pareto Front？
+
+还有哪些方向可能进一步改进？
+
+如果多个目标之间存在冲突，
+
+请明确指出：
+
+哪些参数偏向：
+
+- Metric A
+- Metric B
+- 综合平衡
+
+--------------------------------------------------
+Step 4 生成最终配置
+--------------------------------------------------
+
+目标：
+
+不是继续探索。
+
+而是：
+
+**生成当前最有希望成为 Pareto Front 的配置集合。**
+
+设计原则：
+
+1.
+
+优先采用历史实验已经证明有效的参数区域。
+
+2.
+
+可以微调已有最佳参数。
+
+例如：
+
+如果历史最优：
+
+threshold=0.30
+
+可以尝试：
+
+0.28
+0.29
+0.30
+0.31
+0.32
+
+而不是跳到：
+
+0.6
+
+3.
+
+允许生成多个配置，但每个配置都必须有充分理由。
+
+不要生成明显成功概率较低的探索配置。
+
+4.
+
+允许不同配置分别偏向：
+
+- 极致 Metric A
+- 极致 Metric B
+- 最佳综合平衡
+
+以形成更好的 Pareto Front。
+
+5.
+
+不同配置之间应具有明确差异。
+
+不要仅修改无关参数。
+
+6.
+
+如果历史已经证明某参数最佳，
+
+应直接固定。
+
+不要为了探索而继续改变。
+
+--------------------------------------------------
+Step 5 控制数量
+--------------------------------------------------
+
+本轮目标不是覆盖搜索空间。
+
+而是输出：
+
+一组高质量候选。
+
+建议：
+
+5~20 个 config。
+
+数量宁少勿滥。
+
+每个 config 都应该有较高成功概率。
+
+--------------------------------------------------
+Step 6 生成 generate_trials.py
+--------------------------------------------------
+
+生成：
+
+generate_trials.py
+
+放置：
+
+{tmp_workdir}
+
+脚本负责：
+
+读取：
+
+{self.base_config_path}
+
+自动生成所有 config。
+
+要求：
+
+- 可重复运行
+- 参数统一管理
+- 自动创建目录
+- 自动命名：
+
+config_000.json
+
+config_001.json
+
+...
+
+不要手写 json。
+
+--------------------------------------------------
+Step 7 生成 description.txt
+--------------------------------------------------
+
+生成：
+
+description.txt
+
+放置到：
+
+{tmp_workdir}
+
+内容包括：
+
+1.
+
+历史实验得到的主要结论。
+
+2.
+
+为什么最终选择这些参数。
+
+3.
+
+每个 config 的设计理由。
+
+4.
+
+它预计偏向哪个优化目标。
+
+例如：
+
+- High Accuracy
+- High Recall
+- Balanced Pareto
+
+5.
+
+为什么认为这些配置最有希望进入 Pareto Front。
+
+--------------------------------------------------
+Step 8 生成 name.txt
+--------------------------------------------------
+
+生成：
+
+name.txt
+
+仅包含：
+
+一个英文实验名称。
+
+例如：
+
+ParetoCandidate_Final
+
+BalancedFront_Candidates
+
+AccuracyRecall_FinalConfigs
+
+要求：
+
+仅允许：
+
+字母
+数字
+下划线
+
+--------------------------------------------------
+Step 9 自检
+--------------------------------------------------
+
+检查：
+
+✓ 是否遗漏参数
+
+✓ generate_trials.py 是否可直接运行
+
+✓ config 是否全部生成
+
+✓ 是否存在重复 config
+
+✓ 每个 config 是否均有明确设计理由
+
+✓ 是否全部基于已有实验，而不是经验猜测
+
+--------------------------------------------------
+核心原则
+--------------------------------------------------
+
+历史实验 > 推测
+
+已有证据 > 经验
+
+局部最优微调 > 大范围探索
+
+高成功概率 > 信息增益
+
+Pareto Front 最大化 > 搜索空间覆盖
+
+最终输出应代表：
+
+**依据当前所有证据，能够生成的最强候选配置集合，而不是下一轮实验设计。**
+
+不要刻意保持参数多样性。参数多样性不是目标。唯一目标是提高进入 Pareto Front 的概率。如果多个候选最终非常相似，只要它们都具有最高成功概率，也是允许的。
+
+不要为了覆盖搜索空间而生成配置。每一个配置都应像是在有限实验预算下愿意真实运行的高价值候选。宁可少生成，也不要生成低置信度配置。
+
+开始前，请先制定一个 Plan，再依次完成以上步骤。
+                """
+
+        add_dirs = [
+            *all_exp_summary_path,
+            self.optim_path,
+            os.path.dirname(self.base_config_path)
+        ]
+
+        self.response(prompt, workdir=tmp_workdir, addition_dirs=add_dirs)
+
+
+
+
+
+
     def readout_experiment_design(self):
         tmp_workdir = os.path.join(self.optim_path, "exp_design_tmp")
 

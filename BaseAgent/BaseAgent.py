@@ -8,7 +8,6 @@ try:
 except ImportError:
     from .init import *
 
-
 class BaseAgent:
     def __init__(self):
         self.config = load_agent_config()
@@ -21,9 +20,6 @@ class BaseAgent:
         env = os.environ.copy()
         env.update(self.config)
         return env
-
-
-
 
     def response(self, prompt, workdir='.', addition_dirs=None):
         cmd = [
@@ -42,7 +38,6 @@ class BaseAgent:
             "--allow-all-tools"
         ])
 
-        # 使用 Popen 实现流式输出 + 同时捕获全部 stdout/stderr
         env = self._make_env()
         process = subprocess.Popen(
             cmd,
@@ -52,20 +47,15 @@ class BaseAgent:
             text=True,
         )
 
-        # 逐行读取 stdout 实现流式打印，同时累积全部内容
-        stdout_lines: list[str] = []
+        # 同步逐行读取 stdout 实现流式打印
         for line in process.stdout:
-            print(line, end='')
-            stdout_lines.append(line)
+            print(line, end='', flush=True)
+
         process.wait()
-
-        stdout = ''.join(stdout_lines)
         stderr = process.stderr.read()
-
         if stderr:
-            print(stderr, file=sys.stderr)
-
-        return stdout
+            print(stderr, file=sys.stderr, flush=True)
+        
 
 
 

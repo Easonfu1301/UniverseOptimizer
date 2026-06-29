@@ -7,6 +7,9 @@ from EAgent.LearningAgent import LearningAgent
 from EAgent.ExpDesignAgent import ExpDesignAgent
 import time
 
+import matplotlib
+matplotlib.use('Agg')
+
 from FUCKROOT import HEP_PLOT
 import matplotlib.pyplot as plt
 
@@ -25,7 +28,7 @@ class Optimizer:
         self.metrics_to_optimize = metrics_to_optimize
         self.metrics_direction = metrics_direction
 
-        self.processor = 2
+        self.processor = 10
         self.task_pool = TaskPool(max_workers=self.processor)
 
         self.base_dir = os.path.join(workdir_path, self.name)
@@ -57,7 +60,11 @@ class Optimizer:
             metrics_direction=self.metrics_direction,
             base_config_path=self.default_config_path
         )
-        agent.acquire_experiment()
+
+        if len(self.Experiments) % 5 == 0:
+            agent.acquire_experiment_best()
+        else:
+            agent.acquire_experiment()
 
         name, description, configs = agent.readout_experiment_design()
         print(f"Experiment Name: {name}")
@@ -97,7 +104,7 @@ class Optimizer:
         while self.wait_FALG and not self.complete_all_experiments():
             # print(self.wait_FALG, [exp.all_complete for exp in self.Experiments])
             print("Waiting for all trials to complete...")
-            time.sleep(1)
+            time.sleep(5)
 
         self.wait_FALG = False
 
@@ -158,7 +165,7 @@ class Optimizer:
 
     def plot_all_exp_pareto_fronts(self):
         assert len(self.pareto_metrics) == 2, "Exactly two metrics must be provided for Pareto front plotting."
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(figsize=(20, 16))
         x_metric, y_metric = self.pareto_metrics
 
         for exp in self.Experiments:
@@ -183,7 +190,7 @@ if __name__ == "__main__":
     import json
 
     optimizer = Optimizer(
-        name="LongTrackOptimizer",
+        name="LongTrackOptimizer_v2",
         script_path="/home/easonfu/pyproj/UniverseOptimizer/testscripts/run",
         config_path="/home/easonfu/pyproj/UniverseOptimizer/testscripts/config.json",
         metrics_to_optimize=["eff", "effp5", "ghostrate"],

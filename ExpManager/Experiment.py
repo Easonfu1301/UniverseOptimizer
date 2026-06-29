@@ -6,6 +6,9 @@ from utils import *
 from utils.funny_test import run_haha_job
 from ExpManager.Trial import Trial
 import threading
+import matplotlib
+matplotlib.use('Agg')
+
 from EAgent.SummaryAgent import SummaryAgent
 import matplotlib.pyplot as plt
 
@@ -94,7 +97,7 @@ class Experiment:
 
         pareto_front = self.cal_pareto_front(keys)
         if pareto_front:
-            fig, ax = plt.subplots()
+            fig, ax = plt.subplots(figsize=(20, 16))
             ax.scatter([point[keys[0]] for point in pareto_front],
                           [point[keys[1]] for point in pareto_front], color='blue', label='Pareto Front')
 
