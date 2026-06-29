@@ -4,18 +4,19 @@ from BaseAgent import BaseAgent
 
 
 class LearningAgent(BaseAgent):
-    def __init__(self, workdir, script_path, default_config, metrics_to_optimize, algorithm_path):
+    def __init__(self, workdir, script_path, default_config, metrics_to_optimize, metrics_direction, algorithm_path):
         super().__init__()
 
         self.workdir = workdir
         self.script_path = script_path
         self.default_config = default_config
         self.metrics_to_optimize = metrics_to_optimize
+        self.metrics_direction = metrics_direction
         self.algorithm_path = algorithm_path
 
     def learn(self):
         prompt = f"""
-你将看到一个算法，由{self.script_path}的脚本所运行，它的默认配置是{self.default_config}，它的优化指标是{self.metrics_to_optimize}。
+你将看到一个算法，由{self.script_path}的脚本所运行，它的默认配置是{self.default_config}，它的优化指标是{self.metrics_to_optimize}，优化方向分别是{self.metrics_direction}（max表示越大越好，min表示越小越好）。
 你需要根据这些信息，你需要做以下事情：
 1. 请根据运行脚本，找到实际运行的算法链，排除没有用到的部分，知道算法之间的调用关系和数据流向
 2. 了解最终的优化目标是如何定义和计算的。

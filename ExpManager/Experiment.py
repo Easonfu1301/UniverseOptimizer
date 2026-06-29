@@ -1,12 +1,13 @@
 import os
+import json
 import time
-
+from FUCKROOT import HEP_PLOT
 from utils import *
 from utils.funny_test import run_haha_job
 from ExpManager.Trial import Trial
 import threading
 from EAgent.SummaryAgent import SummaryAgent
-
+import matplotlib.pyplot as plt
 
 
 class Experiment:
@@ -30,6 +31,7 @@ class Experiment:
             if all([trial.processed for trial in self.trials]):
                 print(f"All trials in experiment {self.name} are complete.")
                 self.summary()
+                self.plot_pareto_front()
                 self.all_complete = True
             else:
                 print(f"Monitoring experiment {self.name}:, remaining trials: {len([trial for trial in self.trials if not trial.processed])}")
@@ -70,7 +72,8 @@ class Experiment:
     def summary(self):
 
         summary_agent = SummaryAgent(
-            self.base_dir, self.optimizer.base_dir, self.optimizer.metrics_to_optimize
+            self.base_dir, self.optimizer.base_dir, self.optimizer.metrics_to_optimize,
+            self.optimizer.metrics_direction
         )
         summary_agent.generate_summary()
 
@@ -81,6 +84,49 @@ class Experiment:
         description_path = os.path.join(self.base_dir, "description", "description.txt")
         with open(description_path, "w") as f:
             f.write(self.description)
+
+
+    def plot_pareto_front(self, keys=None):
+        if keys is None:
+            keys = self.optimizer.pareto_metrics  # Default to the first two metrics
+
+        assert len(keys) == 2, "Exactly two metrics must be provided for Pareto front plotting."
+
+        pareto_front = self.cal_pareto_front(keys)
+        if pareto_front:
+            fig, ax = plt.subplots()
+            ax.scatter([point[keys[0]] for point in pareto_front],
+                          [point[keys[1]] for point in pareto_front], color='blue', label='Pareto Front')
+
+            ax.set_xlabel(keys[0])
+            ax.set_ylabel(keys[1])
+            ax.set_title('Pareto Front')
+            ax.legend()
+            fig.savefig(os.path.join(self.base_dir, "summary", f"pareto_front_{keys[0]}_vs_{keys[1]}.png"), dpi=300)
+            plt.close(fig)
+        else:
+            print("No Pareto front found. Ensure that trials have been processed and results are available.")
+
+
+
+    def cal_pareto_front(self, keys):
+        results = []
+        for trial in self.trials:
+            if trial.processed:
+                result_path = os.path.join(trial.base_dir, "result.json")
+                if os.path.exists(result_path):
+                    with open(result_path, "r") as f:
+                        result = json.load(f)
+                        results.append({key: result[key] for key in keys})
+
+        # Map directions: only for the keys that are being queried
+        direction_map = dict(zip(self.optimizer.metrics_to_optimize,
+                                 self.optimizer.metrics_direction))
+        directions = [direction_map.get(k, "min") for k in keys]
+        pareto_front = calculate_pareto_front(results, keys, directions)
+        return pareto_front
+
+
 
 
 

@@ -5,11 +5,12 @@ from BaseAgent import BaseAgent
 
 
 class ExpDesignAgent(BaseAgent):
-    def __init__(self, optim_path, metrics_to_optimize, base_config_path):
+    def __init__(self, optim_path, metrics_to_optimize, metrics_direction, base_config_path):
         super().__init__()
 
         self.optim_path = optim_path
         self.metrics_to_optimize = metrics_to_optimize
+        self.metrics_direction = metrics_direction
         self.base_config_path = base_config_path
 
     def acquire_experiment(self):
@@ -82,6 +83,8 @@ class ExpDesignAgent(BaseAgent):
 
 {self.metrics_to_optimize}
 
+优化方向分别是{self.metrics_direction}（max表示越大越好，min表示越小越好）。
+
 尽量逼近 Pareto Front。
 
 实验设计应遵循：
@@ -91,6 +94,7 @@ class ExpDesignAgent(BaseAgent):
 - 避免重复已有实验
 - 保持实验数量合理
 - 每个实验都应说明设计原因
+- 既要寻找多目标之间的平衡研究，也要有针对单目标极致性能的研究
 
 如果无法证明某参数有效，则继续探索，而不是固定。
 # Step 3.5 实验预算（Experiment Budget）

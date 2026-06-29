@@ -7,37 +7,29 @@ from EAgent.LearningAgent import LearningAgent
 from EAgent.ExpDesignAgent import ExpDesignAgent
 import time
 
-
-
-
+from FUCKROOT import HEP_PLOT
+import matplotlib.pyplot as plt
 
 
 class Optimizer:
-    def __init__(self, name, script_path, config_path, metrics_to_optimize, algorithm_path=None):
+    def __init__(self, name, script_path, config_path, metrics_to_optimize, metrics_direction, algorithm_path=None):
         self.all_pass = None
         self.name = name
 
-
         self.script_path = script_path
-
 
         self.default_config_path = config_path
         with open(self.default_config_path, "r") as f:
             self.default_config = json.load(f)
 
-
         self.metrics_to_optimize = metrics_to_optimize
-
+        self.metrics_direction = metrics_direction
 
         self.processor = 1
         self.task_pool = TaskPool(max_workers=self.processor)
 
-
-
-
         self.base_dir = os.path.join(workdir_path, self.name)
         self.algorithm_path = algorithm_path
-
 
         self.create_folder_structure()
 
@@ -54,10 +46,15 @@ class Optimizer:
             os.makedirs(path, exist_ok=True)
             print(f"Created folder: {path}")
 
+    def set_pareto_metrics(self, keys):
+        self.pareto_metrics = keys
+
+
     def acquire_experiment(self):
         agent = ExpDesignAgent(
             optim_path=self.base_dir,
             metrics_to_optimize=self.metrics_to_optimize,
+            metrics_direction=self.metrics_direction,
             base_config_path=self.default_config_path
         )
         agent.acquire_experiment()
@@ -75,23 +72,18 @@ class Optimizer:
 
         self.task_pool.start_pool()
 
-
         init_exp = self.init_default_experiment()
         init_exp.run_all_trials()
 
-
-
         self.learning_algorithm()
-
 
         self.wait_FALG = True
         self.wait_or_continue()
-
+        self.plot_all_exp_pareto_fronts()
 
         while True:
-
             name, description, configs = self.acquire_experiment()
-            name = f"{len(self.Experiments)+1}_{name}"
+            name = f"{len(self.Experiments) + 1}_{name}"
             new_exp = self.create_experiment(name, description, configs)
             new_exp.run_all_trials()
 
@@ -99,16 +91,7 @@ class Optimizer:
 
             self.wait_FALG = True
             self.wait_or_continue()
-
-
-
-
-
-
-
-
-
-
+            self.plot_all_exp_pareto_fronts()
 
     def wait_or_continue(self):
         while self.wait_FALG and not self.complete_all_experiments():
@@ -118,10 +101,8 @@ class Optimizer:
 
         self.wait_FALG = False
 
-
     def complete_all_experiments(self):
         return all([exp.all_complete for exp in self.Experiments])
-
 
     def init_default_experiment(self):
         name = "1_DefaultExperiment"
@@ -129,18 +110,6 @@ class Optimizer:
         configs = [self.default_config for i in range(1)]
         init_exp = self.create_experiment(name, description, configs)
         return init_exp
-
-
-
-
-
-
-
-
-
-
-
-
 
     def create_experiment(self, name, description, configs):
         experiment = Experiment(name, description, self)
@@ -150,24 +119,7 @@ class Optimizer:
 
         self.Experiments.append(experiment)
 
-
         return experiment
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     def check_parameter(self):
         if not self.algorithm_path:
@@ -179,12 +131,11 @@ class Optimizer:
             script_path=self.script_path,
             default_config=self.default_config,
             metrics_to_optimize=self.metrics_to_optimize,
+            metrics_direction=self.metrics_direction,
             algorithm_path=self.algorithm_path
         )
         param_checker.check()
         self.all_pass = param_checker.all_pass()
-
-
 
     def learning_algorithm(self):
         if not self.algorithm_path:
@@ -196,16 +147,34 @@ class Optimizer:
             script_path=self.script_path,
             default_config=self.default_config,
             metrics_to_optimize=self.metrics_to_optimize,
+            metrics_direction=self.metrics_direction,
             algorithm_path=self.algorithm_path
         )
         algo_learner.learn()
 
-
-
-
-
     def update_learning_algorithm(self):
         pass
+
+
+    def plot_all_exp_pareto_fronts(self):
+        assert len(self.pareto_metrics) == 2, "Exactly two metrics must be provided for Pareto front plotting."
+        fig, ax = plt.subplots()
+        x_metric, y_metric = self.pareto_metrics
+
+        for exp in self.Experiments:
+            pareto_front = exp.cal_pareto_front(self.pareto_metrics)
+            if pareto_front:
+                xs = [p[x_metric] for p in pareto_front]
+                ys = [p[y_metric] for p in pareto_front]
+                ax.scatter(xs, ys, label=f"Experiment {exp.name}")
+        ax.set_xlabel(x_metric)
+        ax.set_ylabel(y_metric)
+        ax.set_title(f"Pareto Fronts for {x_metric} vs {y_metric}")
+        ax.legend()
+
+        fig.savefig(os.path.join(self.base_dir, "Summary", f"pareto_front_{x_metric}_vs_{y_metric}.png"), dpi=300)
+        plt.close(fig)
+        plt.close(fig)
 
 
 
@@ -214,22 +183,19 @@ if __name__ == "__main__":
     import json
 
     optimizer = Optimizer(
-        name="TestOptimizer",
+        name="LongTrackOptimizer",
         script_path="/home/easonfu/pyproj/UniverseOptimizer/testscripts/run",
         config_path="/home/easonfu/pyproj/UniverseOptimizer/testscripts/config.json",
         metrics_to_optimize=["eff", "effp5", "ghostrate"],
+        metrics_direction=["max", "max", "min"],
         algorithm_path="/home/easonfu/Software/260613_Moore/stack"
     )
+
+    optimizer.set_pareto_metrics(["eff", "ghostrate"])
 
     optimizer.check_parameter()
     if optimizer.all_pass:
         print("All parameters passed the check. Starting optimization...")
         optimizer.start_optimize()
 
-
-
     # optimizer.start_optimize()
-
-
-
-
