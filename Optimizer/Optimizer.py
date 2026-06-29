@@ -29,7 +29,7 @@ class Optimizer:
         self.metrics_to_optimize = metrics_to_optimize
 
 
-        self.processor = 10
+        self.processor = 1
         self.task_pool = TaskPool(max_workers=self.processor)
 
 
@@ -74,23 +74,24 @@ class Optimizer:
     def start_optimize(self):
 
         self.task_pool.start_pool()
-        #
-        #
-        # init_exp = self.init_default_experiment()
-        # init_exp.run_all_trials()
-        #
-        #
-        #
-        # self.learning_algorithm()
-        #
-        #
-        # self.wait_FALG = True
-        # self.wait_or_continue()
+
+
+        init_exp = self.init_default_experiment()
+        init_exp.run_all_trials()
+
+
+
+        self.learning_algorithm()
+
+
+        self.wait_FALG = True
+        self.wait_or_continue()
 
 
         while True:
 
             name, description, configs = self.acquire_experiment()
+            name = f"{len(self.Experiments)+1}_{name}"
             new_exp = self.create_experiment(name, description, configs)
             new_exp.run_all_trials()
 
@@ -123,7 +124,7 @@ class Optimizer:
 
 
     def init_default_experiment(self):
-        name = "DefaultExperiment"
+        name = "1_DefaultExperiment"
         description = "Experiment to test the default configuration."
         configs = [self.default_config for i in range(1)]
         init_exp = self.create_experiment(name, description, configs)
@@ -220,14 +221,14 @@ if __name__ == "__main__":
         algorithm_path="/home/easonfu/Software/260613_Moore/stack"
     )
 
-    # optimizer.check_parameter()
-    # if optimizer.all_pass:
-    #     print("All parameters passed the check. Starting optimization...")
-    #     optimizer.start_optimize()
+    optimizer.check_parameter()
+    if optimizer.all_pass:
+        print("All parameters passed the check. Starting optimization...")
+        optimizer.start_optimize()
 
 
 
-    optimizer.start_optimize()
+    # optimizer.start_optimize()
 
 
 

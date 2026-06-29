@@ -29,6 +29,7 @@ class Experiment:
         while not self.all_complete:
             if all([trial.processed for trial in self.trials]):
                 print(f"All trials in experiment {self.name} are complete.")
+                self.summary()
                 self.all_complete = True
             else:
                 print(f"Monitoring experiment {self.name}:, remaining trials: {len([trial for trial in self.trials if not trial.processed])}")
@@ -67,10 +68,9 @@ class Experiment:
         self.trials.append(trial)
 
     def summary(self):
-        workdir = os.path.join(self.base_dir, "summary")
 
         summary_agent = SummaryAgent(
-            workdir, self.description
+            self.base_dir, self.optimizer.base_dir, self.optimizer.metrics_to_optimize
         )
         summary_agent.generate_summary()
 
