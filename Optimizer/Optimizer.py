@@ -200,9 +200,8 @@ class Optimizer:
         ax.set_ylabel(y_metric)
         ax.set_title(f"Pareto Fronts for {x_metric} vs {y_metric}")
         ax.legend()
-
+        plt.tight_layout()
         fig.savefig(os.path.join(self.base_dir, "Summary", f"pareto_front_{x_metric}_vs_{y_metric}.png"), dpi=300)
-        plt.close(fig)
         plt.close(fig)
 
 

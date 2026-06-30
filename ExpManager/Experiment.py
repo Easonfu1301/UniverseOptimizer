@@ -106,6 +106,7 @@ class Experiment:
             ax.set_ylabel(keys[1])
             ax.set_title('Pareto Front')
             ax.legend()
+            plt.tight_layout()
             fig.savefig(os.path.join(self.base_dir, "summary", f"pareto_front_{keys[0]}_vs_{keys[1]}.png"), dpi=300)
             plt.close(fig)
         else:
