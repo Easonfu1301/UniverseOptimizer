@@ -5,6 +5,7 @@ from TaskPool.TaskPool import TaskPool
 from EAgent.ParamCheckerAgent import ParamCheckerAgent
 from EAgent.LearningAgent import LearningAgent
 from EAgent.ExpDesignAgent import ExpDesignAgent
+from EAgent.InstructAgent import InstructAgent
 import time
 
 import matplotlib
@@ -37,6 +38,7 @@ class Optimizer:
         self.create_folder_structure()
 
         self.Experiments = []  # List to hold experiments associated with this optimizer
+        self.temp_exp = []
         self.wait_FALG = False
 
     def create_folder_structure(self):
@@ -101,7 +103,14 @@ class Optimizer:
             self.plot_all_exp_pareto_fronts()
 
     def wait_or_continue(self):
-        while self.wait_FALG and not self.complete_all_experiments():
+        while True:
+            if not self.wait_FALG or self.complete_all_experiments():
+                if self.complete_all_experiments():
+                    
+                    self.update_learning_algorithm()
+                    self.temp_exp = []
+
+                break
             # print(self.wait_FALG, [exp.all_complete for exp in self.Experiments])
             print("Waiting for all trials to complete...")
             time.sleep(5)
@@ -125,6 +134,7 @@ class Optimizer:
             experiment.add_trial(config=config, index=experiment.get_n_trials())
 
         self.Experiments.append(experiment)
+        self.temp_exp.append(experiment)
 
         return experiment
 
@@ -160,7 +170,14 @@ class Optimizer:
         algo_learner.learn()
 
     def update_learning_algorithm(self):
-        pass
+        agent = InstructAgent(
+            experiment_paths=[exp.base_dir for exp in self.temp_exp],
+            optim_path=self.base_dir,
+            algorithm_path=self.algorithm_path,
+            metrics_to_optimize=self.metrics_to_optimize,
+            metrics_direction=self.metrics_direction
+        )
+        agent.instruct()
 
 
     def plot_all_exp_pareto_fronts(self):
@@ -190,7 +207,7 @@ if __name__ == "__main__":
     import json
 
     optimizer = Optimizer(
-        name="LongTrackOptimizer_v2",
+        name="LongTrackOptimizer_v4",
         script_path="/home/easonfu/pyproj/UniverseOptimizer/testscripts/run",
         config_path="/home/easonfu/pyproj/UniverseOptimizer/testscripts/config.json",
         metrics_to_optimize=["eff", "effp5", "ghostrate"],

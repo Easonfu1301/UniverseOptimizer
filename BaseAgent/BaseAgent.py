@@ -34,7 +34,7 @@ class BaseAgent:
         cmd.extend([
             "-p", prompt,
             # "--log-level", "debug",
-            "--reasoning-effort", "max",
+            "--reasoning-effort", self.config.get("THINKING_EFFORT", "high"),
             "--allow-all-tools"
         ])
 

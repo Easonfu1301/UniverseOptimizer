@@ -1,5 +1,6 @@
 import os.path
 import json
+from natsort import natsorted
 from BaseAgent import BaseAgent
 
 
@@ -14,13 +15,7 @@ class ExpDesignAgent(BaseAgent):
         self.base_config_path = base_config_path
 
     def acquire_experiment(self):
-        all_exp_summary_path = os.listdir(os.path.join(self.optim_path, "Experiments"))
-        all_exp_summary_path = [os.path.join(self.optim_path, "Experiments", exp) for exp in all_exp_summary_path if
-                                os.path.isdir(os.path.join(self.optim_path, "Experiments", exp))]
-
-        all_exp_summary_path = [os.path.join(exp_path, "summary") for exp_path in all_exp_summary_path]
-
-        algo_summary_path = os.path.join(self.optim_path, "Summary")
+        summary_base = os.path.join(self.optim_path, "Summary")
 
         tmp_workdir = os.path.join(self.optim_path, "exp_design_tmp")
         tmp_workdir_trials = os.path.join(tmp_workdir, "trials")
@@ -32,13 +27,11 @@ class ExpDesignAgent(BaseAgent):
         prompt = f"""
 这是一个迭代实验优化任务。
 
-已有实验总结位于：
+实验指导与算法配置说明位于：
 
-{all_exp_summary_path}
+{summary_base}
 
-算法配置说明位于：
-
-{algo_summary_path}
+请重点阅读 instruction.md（实验指导与历史实验总结），并结合 logic.md（算法逻辑）、params.md（参数说明）等文件来理解整体上下文。
 
 你的目标不是重新设计整个算法，而是根据已有实验，为下一轮实验生成新的搜索方案。
 本轮实验应尽量只验证一个优化分组问题（One Optimization Group Problem），而不是同时验证多个优化分组问题。
@@ -117,8 +110,8 @@ class ExpDesignAgent(BaseAgent):
 
 建议的实验规模：
 
-- 一维搜索：约 10 个 trial
-- 二维搜索：约 36 个 trial（例如 6×6）
+- 一维搜索：约 5 个 trial
+- 二维搜索：约 16 个 trial（例如 4x4 ）
 - 三维及以上：原则上避免；如果确有必要，应采用随机采样，并控制在较少数量。
 
 不要生成几百甚至上千个 trial。
@@ -137,8 +130,8 @@ class ExpDesignAgent(BaseAgent):
 
 建议采用：
 
-- 约 80% 的实验用于已有最优附近（exploit）
-- 约 20% 的实验用于探索新的区域（explore）
+- 约 60% 的实验用于已有最优附近（exploit）
+- 约 40% 的实验用于探索新的区域（explore）
 
 5. 如果预计生成的 trial 数量超过上述规模，请主动调整实验设计，例如：
 
@@ -159,6 +152,10 @@ generate_trials.py
 放置于：
 
 {tmp_workdir}
+
+然后：
+
+运行该脚本，生成config文件（务必确认 {tmp_workdir_trials} 目录中有生成好的config）
 
 脚本负责：
 
@@ -192,7 +189,7 @@ SEARCH_SPACE
 
 生成：
 
-description.txt
+description.md
 
 放到：
 
@@ -281,10 +278,6 @@ LongBackwardMP_ThresholdSweep
 
 已有数据支持 > 经验
 
-3.
-
-局部搜索优先，少量全局探索
-
 4.
 
 不要生成重复实验
@@ -297,8 +290,7 @@ LongBackwardMP_ThresholdSweep
         """
 
         add_dirs = [
-            *all_exp_summary_path,
-            self.optim_path,
+            summary_base,
             os.path.dirname(self.base_config_path)
         ]
 
@@ -309,13 +301,7 @@ LongBackwardMP_ThresholdSweep
 
 
     def acquire_experiment_best(self):
-        all_exp_summary_path = os.listdir(os.path.join(self.optim_path, "Experiments"))
-        all_exp_summary_path = [os.path.join(self.optim_path, "Experiments", exp) for exp in all_exp_summary_path if
-                                os.path.isdir(os.path.join(self.optim_path, "Experiments", exp))]
-
-        all_exp_summary_path = [os.path.join(exp_path, "summary") for exp_path in all_exp_summary_path]
-
-        algo_summary_path = os.path.join(self.optim_path, "Summary")
+        summary_base = os.path.join(self.optim_path, "Summary")
 
         tmp_workdir = os.path.join(self.optim_path, "exp_design_tmp")
         tmp_workdir_trials = os.path.join(tmp_workdir, "trials")
@@ -326,13 +312,11 @@ LongBackwardMP_ThresholdSweep
         prompt = f"""
 这是一个实验优化任务。
 
-已有实验总结位于：
+实验指导与算法配置说明位于：
 
-{all_exp_summary_path}
+{summary_base}
 
-算法配置说明位于：
-
-{algo_summary_path}
+请重点阅读 instruction.md（实验指导与历史实验总结），并结合 logic.md（算法逻辑）、params.md（参数说明）等文件来理解整体上下文。
 
 你的目标不是设计下一轮搜索，也不是继续验证假设。
 
@@ -530,6 +514,10 @@ generate_trials.py
 
 自动生成所有 config。
 
+然后：
+
+运行该脚本，生成config文件（务必确认 {tmp_workdir_trials} 目录中有生成好的config）
+
 要求：
 
 - 可重复运行
@@ -546,12 +534,12 @@ config_001.json
 不要手写 json。
 
 --------------------------------------------------
-Step 7 生成 description.txt
+Step 7 生成 description.md
 --------------------------------------------------
 
 生成：
 
-description.txt
+description.md
 
 放置到：
 
@@ -657,8 +645,7 @@ Pareto Front 最大化 > 搜索空间覆盖
                 """
 
         add_dirs = [
-            *all_exp_summary_path,
-            self.optim_path,
+            summary_base,
             os.path.dirname(self.base_config_path)
         ]
 
@@ -677,13 +664,13 @@ Pareto Front 最大化 > 搜索空间覆盖
             name = f.read().strip()
 
 
-        description_path = os.path.join(tmp_workdir, "description.txt")
+        description_path = os.path.join(tmp_workdir, "description.md")
         with open(description_path, "r") as f:
             description = f.read()
 
         trials_path = os.path.join(tmp_workdir, "trials")
-        configs = [f for f in os.listdir(trials_path) if f.startswith("config_") and f.endswith(".json")]
-        configs = [json.load(open(os.path.join(trials_path, config_file), "r")) for config_file in configs]
+        config_files = natsorted([f for f in os.listdir(trials_path) if f.startswith("config_") and f.endswith(".json")])
+        configs = [json.load(open(os.path.join(trials_path, config_file), "r")) for config_file in config_files]
 
 
         return name, description, configs

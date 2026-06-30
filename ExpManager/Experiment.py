@@ -84,7 +84,7 @@ class Experiment:
         return len(self.trials)
 
     def dump_description(self):
-        description_path = os.path.join(self.base_dir, "description", "description.txt")
+        description_path = os.path.join(self.base_dir, "description", "description.md")
         with open(description_path, "w") as f:
             f.write(self.description)
 

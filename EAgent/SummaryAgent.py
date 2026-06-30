@@ -13,7 +13,7 @@ class SummaryAgent(BaseAgent):
         self.metrics_direction = metrics_direction
 
     def generate_summary(self):
-        description_path = os.path.join(self.exp_path, "description", "description.txt")
+        description_path = os.path.join(self.exp_path, "description", "description.md")
         analysis_path = os.path.join(self.exp_path, "ana_scripts")
         logic_path = os.path.join(self.optim_path, "Summary", "logic.md")
         params = os.path.join(self.optim_path, "Summary", "params.md")
