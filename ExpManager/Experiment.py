@@ -33,8 +33,8 @@ class Experiment:
         while not self.all_complete:
             if all([trial.processed for trial in self.trials]):
                 print(f"All trials in experiment {self.name} are complete.")
-                self.summary()
                 self.plot_pareto_front()
+                self.summary()
                 self.all_complete = True
             else:
                 print(f"Monitoring experiment {self.name}:, remaining trials: {len([trial for trial in self.trials if not trial.processed])}")

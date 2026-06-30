@@ -30,7 +30,7 @@ class Optimizer:
         self.metrics_direction = metrics_direction
         self.target_metrics = target_metrics
 
-        self.processor = 10
+        self.processor = 9
         self.task_pool = TaskPool(max_workers=self.processor)
 
         self.base_dir = os.path.join(workdir_path, self.name)
@@ -212,11 +212,12 @@ if __name__ == "__main__":
     import json
 
     optimizer = Optimizer(
-        name="LongTrackOptimizer_v4",
+        name="LongTrackOptimizer_v5",
         script_path="/home/easonfu/pyproj/UniverseOptimizer/testscripts/run",
         config_path="/home/easonfu/pyproj/UniverseOptimizer/testscripts/config.json",
         metrics_to_optimize=["eff", "effp5", "ghostrate"],
         metrics_direction=["max", "max", "min"],
+        target_metrics=[90., 95., 10.],
         algorithm_path="/home/easonfu/Software/260613_Moore/stack"
     )
 
