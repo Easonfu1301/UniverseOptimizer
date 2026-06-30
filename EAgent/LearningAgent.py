@@ -4,7 +4,7 @@ from BaseAgent import BaseAgent
 
 
 class LearningAgent(BaseAgent):
-    def __init__(self, workdir, script_path, default_config, metrics_to_optimize, metrics_direction, algorithm_path):
+    def __init__(self, workdir, script_path, default_config, metrics_to_optimize, metrics_direction, algorithm_path, target_metrics=None):
         super().__init__()
 
         self.workdir = workdir
@@ -13,10 +13,15 @@ class LearningAgent(BaseAgent):
         self.metrics_to_optimize = metrics_to_optimize
         self.metrics_direction = metrics_direction
         self.algorithm_path = algorithm_path
+        self.target_metrics = target_metrics
 
     def learn(self):
+        target_metrics_text = ""
+        if self.target_metrics:
+            target_metrics_text = f"，目标指标值（希望达到的具体数值）为 {self.target_metrics}"
+
         prompt = f"""
-你将看到一个算法，由{self.script_path}的脚本所运行，它的默认配置是{self.default_config}，它的优化指标是{self.metrics_to_optimize}，优化方向分别是{self.metrics_direction}（max表示越大越好，min表示越小越好）。
+你将看到一个算法，由{self.script_path}的脚本所运行，它的默认配置是{self.default_config}，它的优化指标是{self.metrics_to_optimize}，优化方向分别是{self.metrics_direction}（max表示越大越好，min表示越小越好）{target_metrics_text}。
 你需要根据这些信息，你需要做以下事情：
 1. 请根据运行脚本，找到实际运行的算法链，排除没有用到的部分，知道算法之间的调用关系和数据流向
 2. 了解最终的优化目标是如何定义和计算的。

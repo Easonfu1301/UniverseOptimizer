@@ -76,7 +76,8 @@ class Experiment:
 
         summary_agent = SummaryAgent(
             self.base_dir, self.optimizer.base_dir, self.optimizer.metrics_to_optimize,
-            self.optimizer.metrics_direction
+            self.optimizer.metrics_direction,
+            self.optimizer.target_metrics
         )
         summary_agent.generate_summary()
 

@@ -6,13 +6,14 @@ from BaseAgent import BaseAgent
 
 
 class ExpDesignAgent(BaseAgent):
-    def __init__(self, optim_path, metrics_to_optimize, metrics_direction, base_config_path):
+    def __init__(self, optim_path, metrics_to_optimize, metrics_direction, base_config_path, target_metrics=None):
         super().__init__()
 
         self.optim_path = optim_path
         self.metrics_to_optimize = metrics_to_optimize
         self.metrics_direction = metrics_direction
         self.base_config_path = base_config_path
+        self.target_metrics = target_metrics
 
     def acquire_experiment(self):
         summary_base = os.path.join(self.optim_path, "Summary")
@@ -23,6 +24,16 @@ class ExpDesignAgent(BaseAgent):
         os.makedirs(tmp_workdir, exist_ok=True)
         os.makedirs(tmp_workdir_trials, exist_ok=True)
 
+
+        target_metrics_text = ""
+        if self.target_metrics:
+            target_metrics_text = f"""
+目标指标值（Target Metrics）：
+{self.target_metrics}
+
+这些是对应的目标值。优化时，在满足所有目标值约束的前提下，尽量逼近 Pareto Front。
+如果某指标已有明确目标值，优先确保达到该目标，再追求其他指标的极致性能。
+"""
 
         prompt = f"""
 这是一个迭代实验优化任务。
@@ -77,7 +88,7 @@ class ExpDesignAgent(BaseAgent):
 {self.metrics_to_optimize}
 
 优化方向分别是{self.metrics_direction}（max表示越大越好，min表示越小越好）。
-
+{target_metrics_text}
 尽量逼近 Pareto Front。
 
 实验设计应遵循：
@@ -309,6 +320,16 @@ LongBackwardMP_ThresholdSweep
         os.makedirs(tmp_workdir, exist_ok=True)
         os.makedirs(tmp_workdir_trials, exist_ok=True)
 
+        target_metrics_text = ""
+        if self.target_metrics:
+            target_metrics_text = f"""
+目标指标值（Target Metrics）：
+{self.target_metrics}
+
+这些是对应的目标值。在合成最佳配置时，应优先确保满足这些目标。
+达到目标值的前提下，再追求 Pareto Front 的进一步优化。
+"""
+
         prompt = f"""
 这是一个实验优化任务。
 
@@ -387,7 +408,7 @@ Step 3 Pareto Front 分析
 优化方向：
 
 {self.metrics_direction}
-
+{target_metrics_text}
 分析：
 
 已有 Pareto Front 具有哪些特点？

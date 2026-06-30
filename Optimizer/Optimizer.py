@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 
 
 class Optimizer:
-    def __init__(self, name, script_path, config_path, metrics_to_optimize, metrics_direction, algorithm_path=None):
+    def __init__(self, name, script_path, config_path, metrics_to_optimize, metrics_direction, algorithm_path=None, target_metrics=None):
         self.all_pass = None
         self.name = name
 
@@ -28,6 +28,7 @@ class Optimizer:
 
         self.metrics_to_optimize = metrics_to_optimize
         self.metrics_direction = metrics_direction
+        self.target_metrics = target_metrics
 
         self.processor = 10
         self.task_pool = TaskPool(max_workers=self.processor)
@@ -60,7 +61,8 @@ class Optimizer:
             optim_path=self.base_dir,
             metrics_to_optimize=self.metrics_to_optimize,
             metrics_direction=self.metrics_direction,
-            base_config_path=self.default_config_path
+            base_config_path=self.default_config_path,
+            target_metrics=self.target_metrics
         )
 
         if len(self.Experiments) % 5 == 0:
@@ -149,7 +151,8 @@ class Optimizer:
             default_config=self.default_config,
             metrics_to_optimize=self.metrics_to_optimize,
             metrics_direction=self.metrics_direction,
-            algorithm_path=self.algorithm_path
+            algorithm_path=self.algorithm_path,
+            target_metrics=self.target_metrics
         )
         param_checker.check()
         self.all_pass = param_checker.all_pass()
@@ -165,7 +168,8 @@ class Optimizer:
             default_config=self.default_config,
             metrics_to_optimize=self.metrics_to_optimize,
             metrics_direction=self.metrics_direction,
-            algorithm_path=self.algorithm_path
+            algorithm_path=self.algorithm_path,
+            target_metrics=self.target_metrics
         )
         algo_learner.learn()
 
@@ -175,7 +179,8 @@ class Optimizer:
             optim_path=self.base_dir,
             algorithm_path=self.algorithm_path,
             metrics_to_optimize=self.metrics_to_optimize,
-            metrics_direction=self.metrics_direction
+            metrics_direction=self.metrics_direction,
+            target_metrics=self.target_metrics
         )
         agent.instruct()
 

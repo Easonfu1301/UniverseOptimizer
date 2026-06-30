@@ -4,7 +4,7 @@ from BaseAgent import BaseAgent
 
 
 class ParamCheckerAgent(BaseAgent):
-    def __init__(self, workdir, script_path, default_config, metrics_to_optimize, metrics_direction, algorithm_path):
+    def __init__(self, workdir, script_path, default_config, metrics_to_optimize, metrics_direction, algorithm_path, target_metrics=None):
         super().__init__()
 
         self.workdir = workdir
@@ -13,10 +13,15 @@ class ParamCheckerAgent(BaseAgent):
         self.metrics_to_optimize = metrics_to_optimize
         self.metrics_direction = metrics_direction
         self.algorithm_path = algorithm_path
+        self.target_metrics = target_metrics
 
     def check(self):
+        target_metrics_text = ""
+        if self.target_metrics:
+            target_metrics_text = f"，目标指标值（希望达到的具体数值）为 {self.target_metrics}"
+
         prompt = f"""
-你将看到一个算法，由{self.script_path}的脚本所运行，它的默认配置是{self.default_config}，它的优化指标是{self.metrics_to_optimize}，优化方向分别是{self.metrics_direction}（max表示越大越好，min表示越小越好）。
+你将看到一个算法，由{self.script_path}的脚本所运行，它的默认配置是{self.default_config}，它的优化指标是{self.metrics_to_optimize}，优化方向分别是{self.metrics_direction}（max表示越大越好，min表示越小越好）{target_metrics_text}。
 你需要根据这些信息，你需要做以下事情：
 1. 检查这些参数是否正确的传入到对应的算法中。
 2. 检查这些参数是否在算法中已经存在

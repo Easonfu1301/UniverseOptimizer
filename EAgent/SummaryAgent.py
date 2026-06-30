@@ -4,13 +4,14 @@ from BaseAgent import BaseAgent
 
 
 class SummaryAgent(BaseAgent):
-    def __init__(self, exp_path, optim_path, metrics_to_optimize, metrics_direction):
+    def __init__(self, exp_path, optim_path, metrics_to_optimize, metrics_direction, target_metrics=None):
         super().__init__()
 
         self.exp_path = exp_path
         self.optim_path = optim_path
         self.metrics_to_optimize = metrics_to_optimize
         self.metrics_direction = metrics_direction
+        self.target_metrics = target_metrics
 
     def generate_summary(self):
         description_path = os.path.join(self.exp_path, "description", "description.md")
@@ -52,6 +53,7 @@ class SummaryAgent(BaseAgent):
 重点关注：
 - 不同参数组合
 - {self.metrics_to_optimize} 的变化（优化方向：{self.metrics_direction}，max表示越大越好，min表示越小越好）
+- 目标指标值：{self.target_metrics if self.target_metrics else '无特定目标值，以相对优化为准'}
 - 是否存在明显趋势
 
 ## 2. 总结实验事实（最重要）

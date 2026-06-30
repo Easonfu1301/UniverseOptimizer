@@ -4,16 +4,15 @@ from BaseAgent import BaseAgent
 
 
 class InstructAgent(BaseAgent):
-    def __init__(self, experiment_paths, optim_path, algorithm_path, metrics_to_optimize, metrics_direction):
+    def __init__(self, experiment_paths, optim_path, algorithm_path, metrics_to_optimize, metrics_direction, target_metrics=None):
         super().__init__()
-
-
 
         self.experiment_paths = experiment_paths
         self.optim_path = optim_path
         self.algorithm_path = algorithm_path
         self.metrics_to_optimize = metrics_to_optimize
         self.metrics_direction = metrics_direction
+        self.target_metrics = target_metrics
 
 
 
@@ -35,6 +34,17 @@ class InstructAgent(BaseAgent):
 
 
 
+        target_metrics_text = ""
+        if self.target_metrics:
+            target_metrics_text = f"""
+
+5. 目标指标值：
+{self.target_metrics}
+
+这些是希望达到的指标目标值（Target Metrics），在更新参数知识和规划下一轮实验时，
+需优先关注是否已有参数组合能够满足这些目标值，以及哪些参数是达成目标的关键。
+"""
+
         prompt = f"""
 # 任务
 请根据以下实验总结，对参数知识库进行持续更新，而不是重新生成。
@@ -52,7 +62,7 @@ class InstructAgent(BaseAgent):
 
 4. 如有需要，可以重新阅读算法源码及参数说明：
 {self.algorithm_path}
-
+{target_metrics_text}
 ---
 
 # 更新原则
